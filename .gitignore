@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+
+# Environment variables (contains API keys)
+.env
+.env_*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backup / version history files (only deploy current index.html)
+index_v4.html
+index_v5_pre_visual_refactor.html
+index_v6_before_ui_redesign.html
+index_v7_before_retro.html
+index_current_backup.html
+index_v*_backup*.html
+server_v5_pre_visual_refactor.js
+server_v*_backup*.js
+server_v*_before_*.js
+retro-ui-demo.html
+ui-design-breakdown.md
+retro-game-ui-design.md
+NPA_*.md
+Narrative_Perception_Atlas_Prompts.md
+
+# Vercel artifacts (no longer needed)
+vercel.json
+.vercelignore
+/api/
+.npmrc
+package.json
+package-lock.json
+
+# Sub-projects and archives
+Narrative_Engine_完整工程/
+narrative-engine-mcp-practice/
+narrative-engine-ui-design/
+跨文化叙事分析_Skill_完整版/
+.trae-html-share-packages/
+
+# Cloudflare
+.wrangler/
+.dev.vars
+
+# Misc
+*.command
