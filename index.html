@@ -11651,7 +11651,7 @@ footer a:hover { color: var(--gold); }
             body: JSON.stringify({
               model: 'deepseek-v4-pro',
               messages: messages,
-              max_tokens: 32768
+              max_tokens: 65536
             })
           });
           if (!resp.ok) {
@@ -11833,7 +11833,7 @@ footer a:hover { color: var(--gold); }
         _sp(10, '检查核心引擎...');
         var dsOk = await checkDeepSeek();
         if (!dsOk) {
-          return { success: false, error: '核心引擎未连接。请确认：1) 已设置环境变量 DEEPSEEK_API_KEY；2) 已通过 node server.js 启动服务器（而非 python -m http.server）。' };
+          return { success: false, error: '核心引擎未连接。请确认：1) Cloudflare已设置环境变量 DEEPSEEK_API_KEY；2) API服务正常运行。' };
         }
 
         // 证据层 - Added
