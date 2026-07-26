@@ -11499,7 +11499,7 @@ footer a:hover { color: var(--gold); }
 - 好的 detail："范闲在庆帝面前装傻但暗中布局——这种'扮猪吃老虎'的爽感，特别对中国人的胃口。"
 - 不好的 detail："主角具有智慧和隐忍的特质。"
 
-记住：你在模拟**一个真实的人**的观后感，不是写影评论文。`;
+记住：你在模拟**一个真实的人**的观后感，不是写影评论文。所有输出必须使用中文。`;
 
       // ============ CORE ENGINE HEALTH CHECK ============
       async function checkDeepSeek() {
@@ -11626,7 +11626,7 @@ footer a:hover { color: var(--gold); }
           userContent += `Interpretation Preference: ${lens.interpPref}\n`;
         });
 
-        userContent += `\n请代入以上${selectedLenses.length}个透镜的文化身份，分别给出第一印象式的解读。每个透镜输出一行JSON，严格遵循 System Prompt 中定义的格式（包含 firstImpression、noticed[].detail/whyItMatters、ignored、reason）。`;
+        userContent += `\n请用中文代入以上${selectedLenses.length}个透镜的文化身份，分别给出第一印象式的解读。每个透镜输出一行JSON，JSON中的所有文本字段（firstImpression、noticed[].detail、whyItMatters、ignored、reason）都必须使用中文。严格遵循 System Prompt 中定义的格式。`;
 
         return [
           { role: 'system', content: SYSTEM_PROMPT },
