@@ -52,3 +52,7 @@ narrative-engine-ui-design/
 
 # Misc
 *.command
+
+.dev.vars*
+!.dev.vars.example
+!.env.example
