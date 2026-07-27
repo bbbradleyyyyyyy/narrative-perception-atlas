@@ -16,9 +16,49 @@ async function fetchJSON(url, timeoutMs) {
 
 async function wikiSearch(query, lang) {
   var host = lang === 'zh' ? 'zh.wikipedia.org' : 'en.wikipedia.org';
-  var r = await fetchJSON('https://' + host + '/w/api.php?action=query&list=search&srsearch=' + encodeURIComponent(query) + '&srlimit=1&format=json', 8000);
-  if (!r || !r.query || !r.query.search || r.query.search.length === 0) return null;
-  return r.query.search[0].title;
+  var r = await fetchJSON('https://' + host + '/w/api.php?action=query&list=search&srsearch=' + encodeURIComponent(query) + '&srlimit=3&format=json', 8000);
+  if (!r || !r.query || !r.query.search || r.query.search.length === 0) return [];
+  return r.query.search.map(function(s) { return s.title; });
+}
+
+// 提取核心关键词：去掉标点和常见停用词，取前2-3个核心词
+function extractKeywords(query) {
+  var cleaned = query.replace(/[，。！？、；：""''（）\[\]【】《》…—\-·.,!?;:"'()<>\s]+/g, ' ').trim();
+  if (!cleaned) return [];
+  var hasChinese = /[\u4e00-\u9fa5]/.test(cleaned);
+  var words;
+  if (hasChinese) {
+    // 中文：按常见分隔符拆，然后取长度>=2的片段
+    words = cleaned.split(/\s+/).filter(function(w) { return w.length >= 2; });
+    // 如果只有一个长中文词，尝试拆出2-3字的核心片段（简单处理：取前2字和后2字作为关键词）
+    if (words.length === 1 && words[0].length > 4) {
+      var w = words[0];
+      words = [w.substring(0, 2), w.substring(w.length - 2)];
+    }
+  } else {
+    // 英文：按空格拆，过滤短词和停用词
+    var stopwords = ['the','a','an','is','are','was','were','be','been','being','have','has','had','do','does','did','will','would','could','should','may','might','can','shall','of','in','on','at','to','for','with','by','from','as','and','or','but','not','no','this','that','these','those','it','its','i','you','he','she','we','they','them','their','what','which','who','whom','how','why','when','where'];
+    words = cleaned.toLowerCase().split(/\s+/).filter(function(w) {
+      return w.length >= 3 && stopwords.indexOf(w) === -1;
+    });
+  }
+  return words.slice(0, 3);
+}
+
+// 相关性校验：检查 extract 文本中是否包含核心关键词
+function isRelevant(extract, query) {
+  if (!extract || !query) return false;
+  var keywords = extractKeywords(query);
+  if (keywords.length === 0) return true; // 无法提取关键词时默认相关
+  var lowerExtract = extract.toLowerCase();
+  var matchCount = 0;
+  for (var i = 0; i < keywords.length; i++) {
+    if (lowerExtract.indexOf(keywords[i].toLowerCase()) !== -1) {
+      matchCount++;
+    }
+  }
+  // 至少命中一个关键词才算相关（如果只有1个关键词则必须命中；如果有2+个则至少命中1个）
+  return matchCount >= 1;
 }
 
 async function wikiExtract(title, lang) {
@@ -48,9 +88,25 @@ async function wikiExtract(title, lang) {
 }
 
 async function fetchWikiFull(query, lang) {
-  var title = await wikiSearch(query, lang);
-  if (!title) return null;
-  return wikiExtract(title, lang);
+  // 第一步：尝试精确标题匹配
+  var exactResult = await wikiExtract(query, lang);
+  if (exactResult && isRelevant(exactResult.extract, query)) {
+    return exactResult;
+  }
+
+  // 第二步：精确匹配失败，回退到搜索 + 相关性校验
+  var titles = await wikiSearch(query, lang);
+  if (!titles || titles.length === 0) return null;
+
+  // 对前3个搜索结果逐一尝试，选第一个相关的
+  for (var i = 0; i < titles.length; i++) {
+    var result = await wikiExtract(titles[i], lang);
+    if (result && isRelevant(result.extract, query)) {
+      return result;
+    }
+  }
+
+  return null;
 }
 
 async function redditSearch(queryStr, sort, limit) {
