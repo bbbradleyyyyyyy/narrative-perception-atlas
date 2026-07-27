@@ -16,11 +16,20 @@ Narrative Perception Atlas 是一个**跨文化叙事感知仿真平台**。用�
 
 ## 核心功能
 
+### Demo Mode — 产品展示模块
+
+独立模块，不消耗 API Token，类似 Figma Prototype 的产品展示流程，为首次访问用户提供零门槛体验：
+
+- **Welcome Experience**：首次访问展示 "Explore how different cultures perceive the same story."，提供 Start Demo / Skip Demo 双路径
+- **固定 Demo Case（寄生虫 Parasite）**：预设 5 个文化透镜的完整分析结果，每个透镜包含第一印象、注意到、忽略了、文化解码四层分析
+- **四步展示流程**：User Input（打字机效果）→ Lens Retrieval（逐张揭示）→ Narrative Analysis（逐块展开）→ Final Report（双 CTA 引导）
+- **完全独立于 Simulator**：使用固定数据，不调用 DeepSeek API
+
 ### 叙事感知仿真引擎
 
 - **30 个文化透镜**覆盖全球主要文化区域（北美、东亚、欧洲、南亚、中东、非洲、拉美），每个透镜包含核心特质、解读偏好和情感触发点
 - **DeepSeek v4-pro 驱动**，以中文输出跨文化分析，兼顾直觉反应与深度文化解码
-- **分批推理架构**：1-6 个透镜单批调用，7-15 个分 3 组，16-30 个分 5-6 组，解决单次 API token 上限问题
+- **分批推理架构**：≤6 个透镜单批调用，7-15 个分 3 组，>15 个每批 5 个，解决单次 API token 上限问题
 - **跨组对比总结**：多批推理完成后自动生成跨组张力分析，提炼观点对立、意外共鸣和独特盲区
 - **多阶段平滑进度条**，实时显示推理进度和预计剩余时间
 
@@ -43,36 +52,43 @@ Narrative Perception Atlas 是一个**跨文化叙事感知仿真平台**。用�
 - **Stage 3 — Field Intel**：预测真实案例中该群体的解读方式
 - **Stage 4 — Final Verdict**：三道真伪判断题，检验学习成果
 
+XP 经验值系统 + 4 个成就解锁 + localStorage 进度持久化。
+
 ---
 
 ## 技术架构
 
 ```
-┌─────────────────────────────────────────────────┐
-│                   Browser                       │
-│  ┌───────────────────────────────────────────┐  │
-│  │        index.html (SPA, ~12,000 lines)    │  │
-│  │  ┌──────────┐  ┌──────────┐  ┌─────────┐ │  │
-│  │  │Narrative │  │  Lens    │  │ Report  │ │  │
-│  │  │Simulator │  │ Explorer │  │Renderer │ │  │
-│  │  └────┬─────┘  └──────────┘  └─────────┘ │  │
-│  └───────┼───────────────────────────────────┘  │
-└──────────┼──────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│                      Browser                         │
+│  ┌────────────────────────────────────────────────┐  │
+│  │           index.html (SPA, ~13,000 lines)     │  │
+│  │  ┌──────────┐  ┌──────────┐  ┌─────────────┐ │  │
+│  │  │Narrative │  │  Lens    │  │ Report      │ │  │
+│  │  │Simulator │  │ Explorer │  │ Renderer    │ │  │
+│  │  └────┬─────┘  └──────────┘  └─────────────┘ │  │
+│  └───────┼────────────────────────────────────────┘  │
+│          │                                            │
+│  ┌───────┴────────────────────────────────────────┐  │
+│  │  demo-data.js  demo-mode.js  demo-style.css   │  │
+│  │  (Demo Mode 独立模块，不消耗 API Token)        │  │
+│  └────────────────────────────────────────────────┘  │
+└──────────┬───────────────────────────────────────────┘
            │ HTTPS
-┌──────────┼──────────────────────────────────────┐
-│  Cloudflare Pages                               │
-│  ┌───────┴────────────────────────────────────┐ │
-│  │         functions/api/                      │ │
-│  │  ┌──────────┐ ┌────────┐ ┌──────────────┐ │ │
-│  │  │deepseek  │ │health  │ │ mcp-reviews  │ │ │
-│  │  │ proxy    │ │ check  │ │ (Wiki+Reddit)│ │ │
-│  │  └────┬─────┘ └────────┘ └──────┬───────┘ │ │
-│  └───────┼─────────────────────────┼──────────┘ │
-└──────────┼─────────────────────────┼────────────┘
+┌──────────┼───────────────────────────────────────────┐
+│  Cloudflare Pages                                    │
+│  ┌───────┴─────────────────────────────────────────┐ │
+│  │            functions/api/                       │ │
+│  │  ┌──────────┐ ┌────────┐ ┌──────────────┐       │ │
+│  │  │deepseek  │ │health  │ │ mcp-reviews  │       │ │
+│  │  │ proxy    │ │ check  │ │ (Wiki+Reddit)│       │ │
+│  │  └────┬─────┘ └────────┘ └──────┬───────┘       │ │
+│  └───────┼─────────────────────────┼───────────────┘ │
+└──────────┼─────────────────────────┼─────────────────┘
            │                         │
     ┌──────▼──────┐         ┌───────▼────────┐
     │ DeepSeek    │         │  Wikipedia     │
-    │ API (v4-pro)│         │  Reddit JSON   │
+    │ API (v4-pro)│         │  Reddit JSON    │
     └─────────────┘         └────────────────┘
 ```
 
@@ -94,6 +110,9 @@ Narrative Perception Atlas 是一个**跨文化叙事感知仿真平台**。用�
 ```
 narrative-perception-atlas/
 ├── index.html                  # 前端 SPA（Narrative Simulator + Lens Explorer + Report Renderer）
+├── demo-data.js                # Demo Mode 预设案例数据（寄生虫，不消耗 API）
+├── demo-mode.js                # Demo Mode 独立模块逻辑（Welcome → Player → CTA）
+├── demo-style.css              # Demo Mode 独立样式
 ├── functions/api/              # Cloudflare Pages Functions
 │   ├── deepseek.js             # DeepSeek API 代理
 │   ├── health.js               # 引擎健康检查
@@ -108,6 +127,7 @@ narrative-perception-atlas/
 │   ├── cozy_room_1024x576.jpg
 │   └── lens_detail_1024x576.jpg
 ├── .gitignore                  # 排除 .env / node_modules / 备份文件
+├── CHANGELOG.md                # 版本更新记录
 └── README.md                   # 本文档
 ```
 
@@ -173,9 +193,12 @@ node server.js
 - [x] DeepSeek v4-pro 推理 + 分批架构
 - [x] Wikipedia + Reddit 证据层
 - [x] 4 阶段 Lens Explorer 交互学习模块
+- [x] Demo Mode 独立产品展示模块（寄生虫案例）
 - [x] Cloudflare Pages 生产部署
-- [ ] 推理结果缓存（相同 query + 相同 lens 组合复用结果，降低 API 成本）
+- [ ] 推理结果缓存（相同 query + lens 组合复用结果，降低 API 成本）
 - [ ] 错误重试 + 指数退避策略
+- [ ] 报告 TOC 导航条
+- [ ] 更多 Demo Case 扩充
 
 ### Phase 2 — 数据与洞察
 
