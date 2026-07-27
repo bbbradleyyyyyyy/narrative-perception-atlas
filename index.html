@@ -11776,6 +11776,51 @@ footer a:hover { color: var(--gold); }
         ];
       }
 
+      // ============ CROSS-COMPARISON MESSAGES（跨组对比总结）============
+      function _buildCrossComparisonMessages(text, allIds, batchResults, ipKnowledge, searchResults) {
+        var allLenses = allIds.map(function(id){
+          return LENS_METADATA.find(function(m){ return m.id === id; });
+        }).filter(Boolean);
+
+        var systemContent = `你是一位跨文化叙事分析师。你的任务是将多组独立分析的结果进行**跨组对比总结**，提炼出不同文化透镜之间的张力、共鸣和独特洞察。
+        
+要求：
+1. 找出不同文化群体之间最有趣的**观点对立**（至少2组）
+2. 找出不同文化群体之间**意外的共鸣**（至少1组）
+3. 指出某个文化群体的**独特盲区**——其他群体都看到了什么，而这个群体完全没注意到
+4. 用中文输出，简洁有力，像文化评论而非学术论文
+5. 输出格式：纯文本，分段，每段不超过3句话`;
+
+        var userContent = `## 分析目标\n「${text}」\n\n`;
+        userContent += `## 参与分析的透镜（共${allLenses.length}个）\n`;
+        allLenses.forEach(function(lens){
+          userContent += `- ${lens.id}：${lens.nameZh}\n`;
+        });
+        userContent += `\n## 各批次独立分析结果\n`;
+        batchResults.forEach(function(br, idx){
+          userContent += `\n=== 批次${idx+1} ===\n`;
+          // Extract key insights from each batch (firstImpression from each lens)
+          var lines = br.split('\n').filter(function(l){ return l.trim().startsWith('{'); });
+          lines.forEach(function(line){
+            try {
+              var obj = JSON.parse(line.trim());
+              if (obj.lensId && obj.firstImpression) {
+                userContent += `[${obj.lensId}] ${obj.firstImpression}\n`;
+                if (obj.ignored && obj.ignored.length > 0) {
+                  userContent += '  忽略：' + obj.ignored.map(function(ig){ return typeof ig === 'string' ? ig : (ig.what||''); }).join('；') + '\n';
+                }
+              }
+            } catch(e) {}
+          });
+        });
+        userContent += `\n请基于以上各组独立分析，进行跨组对比总结。`;
+
+        return [
+          { role: 'system', content: systemContent },
+          { role: 'user', content: userContent }
+        ];
+      }
+
       // ============ CALL DEEPSEEK (via proxy) ============
       // deepseek-v4-pro 是思考模式模型：
       //   - reasoning_content = 思维链（推理过程）
@@ -11994,48 +12039,73 @@ footer a:hover { color: var(--gold); }
         _sp(30, '匹配IP知识库...');
         var ipKnowledge = _retrieveIPKnowledge(text.trim());
 
-        // Step 3: Build messages (only selected lenses)
+        // Step 3: Determine batch strategy（分批推理）
         _sp(40, '构建推理提示...');
-        var messages = _buildMessages(text.trim(), selectedIds, ipKnowledge, searchResults);
-
-        // Step 4: Call DeepSeek (with multi-stage smooth progress)
-        _sp(55, '调用AI推理（' + selectedIds.length + '个透镜，预计30-90秒）...');
-        var aiResponse = '';
-        var startTime = Date.now();
-        var progressTimer = setInterval(function() {
-          var elapsed = (Date.now() - startTime) / 1000;
-          var pct, label, remaining;
-          if (elapsed < 10) {
-            pct = 55 + (elapsed / 10) * 15; // 55% → 70%
-            label = 'AI正在理解各文化立场...';
-            remaining = Math.max(1, Math.round(60 - elapsed));
-          } else if (elapsed < 30) {
-            pct = 70 + ((elapsed - 10) / 20) * 15; // 70% → 85%
-            label = 'AI正在构建跨文化解读框架...';
-            remaining = Math.max(1, Math.round(50 - elapsed));
-          } else if (elapsed < 60) {
-            pct = 85 + ((elapsed - 30) / 30) * 10; // 85% → 95%
-            label = 'AI正在生成最终分析...';
-            remaining = Math.max(1, Math.round(30 - (elapsed - 30)));
-          } else {
-            pct = 95 + Math.min(4, ((elapsed - 60) / 60) * 4); // 95% → 99%
-            label = '即将完成，整理输出中...';
-            remaining = Math.max(1, Math.round(10 - (elapsed - 60) / 6));
-          }
-          _sp(pct, label + '（约' + remaining + '秒）');
-        }, 2000);
-
-        try {
-          aiResponse = await _callDeepSeek(messages, selectedIds.length);
-        } catch(e) {
-          clearInterval(progressTimer);
-          var errMsg = e.message || '';
-          if (errMsg.indexOf('abort') !== -1 || errMsg.indexOf('timeout') !== -1) {
-            return { success: false, error: 'AI推理超时（>120秒）。可能原因：选了太多透镜、网络不稳定、DeepSeek服务繁忙。建议减少透镜数量后重试。' };
-          }
-          return { success: false, error: 'AI推理失败：' + errMsg };
+        var totalLenses = selectedIds.length;
+        var batchSize, batchCount;
+        if (totalLenses <= 6) {
+          batchSize = totalLenses; batchCount = 1;
+        } else if (totalLenses <= 15) {
+          batchCount = 3; batchSize = Math.ceil(totalLenses / batchCount);
+        } else {
+          batchCount = Math.ceil(totalLenses / 5);
+          batchSize = Math.ceil(totalLenses / batchCount);
         }
-        clearInterval(progressTimer);
+
+        // Step 4: Batch call DeepSeek（分批推理）
+        var allBatchResults = [];
+        var batchErrors = [];
+        for (var b = 0; b < batchCount; b++) {
+          var batchIds = selectedIds.slice(b * batchSize, (b + 1) * batchSize);
+          if (batchIds.length === 0) continue;
+          var batchLabel = batchCount > 1 ? ('批次 ' + (b+1) + '/' + batchCount + ' · ') : '';
+          var basePct = 55 + (b / batchCount) * 35;
+          var batchMaxPct = 55 + ((b + 1) / batchCount) * 35;
+          _sp(basePct, batchLabel + '调用AI推理（' + batchIds.length + '个透镜）...');
+          var batchMessages = _buildMessages(text.trim(), batchIds, ipKnowledge, searchResults);
+          var batchStartTime = Date.now();
+          var progressTimer = setInterval(function() {
+            var elapsed = (Date.now() - batchStartTime) / 1000;
+            var batchRange = batchMaxPct - basePct;
+            var pct = basePct + Math.min(batchRange, (elapsed / 60) * batchRange);
+            var label, remaining;
+            if (elapsed < 10) {
+              label = batchLabel + 'AI正在理解各文化立场...';
+              remaining = Math.max(1, Math.round(60 - elapsed));
+            } else if (elapsed < 30) {
+              label = batchLabel + 'AI正在构建跨文化解读...';
+              remaining = Math.max(1, Math.round(50 - elapsed));
+            } else {
+              label = batchLabel + 'AI正在生成分析...';
+              remaining = Math.max(1, Math.round(30 - (elapsed - 30)));
+            }
+            _sp(Math.round(pct), label + '（约' + remaining + '秒）');
+          }, 2000);
+          try {
+            var batchResponse = await _callDeepSeek(batchMessages, batchIds.length);
+            clearInterval(progressTimer);
+            if (batchResponse && batchResponse.trim().length > 0) {
+              allBatchResults.push(batchResponse);
+            }
+          } catch(e) {
+            clearInterval(progressTimer);
+            batchErrors.push('批次' + (b+1) + '：' + (e.message || '未知错误'));
+          }
+        }
+        if (allBatchResults.length === 0) {
+          return { success: false, error: '所有批次推理均失败。' + (batchErrors.length > 0 ? ' 错误：' + batchErrors.join('；') : '') };
+        }
+        var aiResponse = allBatchResults.join('\n');
+
+        // Step 4.5: Cross-group comparison（跨组对比总结）
+        var crossComparison = '';
+        if (batchCount > 1) {
+          _sp(92, '跨组对比总结中...');
+          try {
+            var crossMessages = _buildCrossComparisonMessages(text.trim(), selectedIds, allBatchResults, ipKnowledge, searchResults);
+            crossComparison = await _callDeepSeek(crossMessages, Math.min(8, selectedIds.length));
+          } catch(e) { crossComparison = ''; }
+        }
 
         if (!aiResponse || aiResponse.trim().length === 0) {
           return { success: false, error: 'AI引擎未返回有效内容。' };
@@ -12065,6 +12135,8 @@ footer a:hover { color: var(--gold); }
           perspectives: perspectives,
           aiModel: 'deepseek-v4-pro',
           aiResponseLength: aiResponse.length,
+          batchCount: batchCount,
+          crossComparison: crossComparison,
           // 证据层 - Added
           // MCP 评论搜索 Promise，与 DeepSeek 并行执行，稍后 resolve
           mcpReviewsPromise: mcpReviewsPromise
@@ -12156,6 +12228,20 @@ footer a:hover { color: var(--gold); }
         html += '<div style="font-size:11px;color:var(--text-muted);padding:6px 12px"><i class="fa-solid fa-spinner fa-spin" style="margin-right:5px"></i>Scanning Wikipedia + Reddit discussions + comments...</div>';
         html += '</div>';
         html += '</div>';
+
+        // === 4.5 Cross-Group Comparison（跨组对比总结） ===
+        if (result.crossComparison) {
+          html += '<div class="reaction-block" style="border-color:rgba(244,180,0,0.35);background:linear-gradient(135deg,rgba(244,180,0,0.12),rgba(244,180,0,0.04));margin-bottom:16px;animation:reconCardEnter 0.5s ease-out both">';
+          html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="width:5px;height:5px;border-radius:50%;background:var(--gold);box-shadow:0 0 6px var(--gold)"></div>';
+          html += '<div style="font-size:10px;color:rgba(244,180,0,0.6);text-transform:uppercase;letter-spacing:0.08em">Cross-Group Comparison · 跨组对比总结</div></div>';
+          html += '<div style="font-size:14px;color:var(--gold);font-weight:600;margin-bottom:8px">' + (result.batchCount || 2) + ' 组独立分析 · ' + (result.perspectives ? result.perspectives.length : '') + ' 个透镜</div>';
+          html += '<div style="font-size:11px;line-height:1.8;color:var(--text-dim)">';
+          var crossLines = result.crossComparison.split('\n').filter(function(l){ return l.trim().length > 0; });
+          crossLines.forEach(function(line){
+            html += '<p style="margin-bottom:6px">' + line.replace(/^#+\s*/, '').trim() + '</p>';
+          });
+          html += '</div></div>';
+        }
 
         // === 5. Per-Lens Perspective Simulation ===
         result.perspectives.forEach(function(p, i){
