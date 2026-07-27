@@ -29,6 +29,6 @@ export async function onRequest(context) {
     const data = await resp.text();
     return new Response(data, { status: resp.status, headers: { 'Content-Type': 'application/json', ...corsHeaders } });
   } catch (e) {
-    return new Response(JSON.stringify({ error: 'DeepSeek API 请求失败: ' + e.message }), { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } });
+    return new Response(JSON.stringify({ error: 'DeepSeek API 暂时不可用，请稍后重试' }), { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } });
   }
 }
