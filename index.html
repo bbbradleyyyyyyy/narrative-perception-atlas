@@ -6151,6 +6151,45 @@ footer a:hover { color: var(--gold); }
     </div>
   </div>
 
+  <!-- ===== DEMO MODE OVERLAYS ===== -->
+  <link rel="stylesheet" href="demo-style.css">
+
+  <!-- Demo Welcome: Case Selection -->
+  <div id="demoWelcomeOverlay" style="display:none">
+    <div class="demo-welcome-title">Narrative Perception Atlas</div>
+    <div class="demo-welcome-sub">Explore how different cultures perceive the same story.</div>
+    <div class="demo-case-grid">
+      <div class="demo-case-card" onclick="DemoMode.selectCase('parasite')">
+        <div class="demo-card-rank">01</div>
+        <div class="demo-card-title">寄生虫</div>
+        <div class="demo-card-title-en">Parasite · 2019</div>
+        <div class="demo-card-position">证明核心理念</div>
+        <div class="demo-card-tagline">同一部电影，三个截然不同的故事</div>
+      </div>
+    </div>
+    <div class="demo-welcome-actions">
+      <button class="demo-cta-primary" onclick="DemoMode.selectCase('parasite')" style="font-size:13px;padding:12px 28px">Start Demo</button>
+      <button class="demo-btn-skip" onclick="DemoMode.skipDemo()">Skip Demo</button>
+    </div>
+  </div>
+
+  <!-- Demo Player: Full-screen presentation -->
+  <div id="demoPlayerOverlay" style="display:none">
+    <div class="demo-player-header">
+      <button class="demo-player-back" onclick="DemoMode.backFromPlayer()"><i class="fa-solid fa-arrow-left"></i> Back</button>
+      <div class="demo-player-case-label"></div>
+      <div class="demo-player-badge">DEMO</div>
+    </div>
+    <div class="demo-player-body"></div>
+    <div class="demo-progress-bar">
+      <div class="demo-progress-dot"></div>
+      <div class="demo-progress-dot"></div>
+      <div class="demo-progress-dot"></div>
+      <div class="demo-progress-dot"></div>
+      <span class="demo-progress-label">Input</span>
+    </div>
+  </div>
+
   <!-- ===== ALL_LENSES DATA ===== -->
   <script>
     // ============================================================
@@ -13019,24 +13058,19 @@ footer a:hover { color: var(--gold); }
     if (!localStorage.getItem('npa_onboarded')) {
       var overlay = document.getElementById('onboardingOverlay');
       if (overlay) overlay.style.display = 'flex';
+    } else if (!localStorage.getItem('npa_demo_seen') && typeof DemoMode !== 'undefined') {
+      // 已通过 Onboarding 但未看过 Demo → 直接展示 Demo Welcome
+      setTimeout(function() { DemoMode.showWelcome(); }, 500);
     }
     function closeOnboarding() {
       var overlay = document.getElementById('onboardingOverlay');
       if (overlay) overlay.style.display = 'none';
       localStorage.setItem('npa_onboarded', '1');
-      // Demo Mode: onboarding 关闭后自动触发一次演示
-      setTimeout(function() { maybeAutoDemo(); }, 400);
-    }
-
-    // Demo Mode: 首次访问自动演示完整流程
-    function maybeAutoDemo() {
-      if (localStorage.getItem('npa_demo_seen')) return;
-      localStorage.setItem('npa_demo_seen', '1');
-      // 导航到 simulator 并触发一键体验
-      if (typeof App !== 'undefined' && App.navigateTo) {
-        App.navigateTo('simulator');
-        setTimeout(function() { runDemo(); }, 900);
-      }
+      // Onboarding 关闭后，触发 Demo Mode Welcome
+      setTimeout(function() {
+        if (typeof DemoMode !== 'undefined') DemoMode.onOnboardingClosed();
+        else if (typeof App !== 'undefined' && App.navigateTo) App.navigateTo('simulator');
+      }, 400);
     }
 
     // ========== IMMERSIVE WORLD MAP BACKGROUND SYSTEM ==========
@@ -13468,6 +13502,10 @@ footer a:hover { color: var(--gold); }
   </div>
   <div class="scanline" id="scanline"></div>
   <!-- IA Redesign - Portal Space Transitions (end) -->
+
+  <!-- Demo Mode: 独立模块，不消耗 API Token -->
+  <script src="demo-data.js"></script>
+  <script src="demo-mode.js"></script>
 
 </body>
 </html>
