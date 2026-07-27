@@ -83,6 +83,7 @@ XP 经验值系统 + 4 个成就解锁 + localStorage 进度持久化
 
 - **UI 修复**：Lens Explorer 选择题选项（challenge-option）颜色从金色恢复为蓝色，与交互元素的数据/信息属性保持一致
 - **Demo Mode 体验优化**：Step 2（Narrative Analysis）取消自动跳转到 CTA，改为所有 lens 分析揭示完成后显示"阅读完毕，继续 →"手动按钮，用户可自行翻阅后再进入下一步
+- **Portal 视觉调整**：Explorer 入口卡片"文明星图"整体视觉从金色改为蓝色（图标、标题、CTA、发光效果、hover 阴影统一蓝色调）
 
 ---
 
