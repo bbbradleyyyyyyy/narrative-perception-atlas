@@ -201,6 +201,7 @@ body {
   0%, 100% { opacity: 1; box-shadow: 0 0 6px currentColor; }
   50% { opacity: 0.5; box-shadow: 0 0 2px currentColor; }
 }
+@keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
 .status-dot-retro {
   width: 6px;
   height: 6px;
@@ -6047,10 +6048,16 @@ footer a:hover { color: var(--gold); }
     <!-- Input -->
     <div class="sim-input">
       <label><i class="fa-solid fa-pen" style="color:var(--gold)"></i> 叙事内容 / Narrative Content</label>
-      <textarea id="narrativeInput" class="sim-textarea" rows="4" placeholder="输入IP名称（如「三体」「哪吒」）、新闻事件、人物名称或任何叙事文本..."></textarea>
+      <textarea id="narrativeInput" class="sim-textarea" rows="4" placeholder="试试输入「哪吒2 全球票房破纪录」或「老友记重聚特辑」..."></textarea>
       <span id="charCount" class="char-count"><i class="fa-solid fa-ruler-horizontal" style="margin-right:4px;font-size:9px"></i>0 字符</span>
 
       <label><i class="fa-solid fa-eye" style="color:var(--gold)"></i> 选择受众透镜 / Select Audience Lenses</label>
+      <div class="lens-toolbar" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <input type="text" id="lensSearch" class="lens-search" placeholder="搜索透镜..." style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:rgba(0,0,0,0.2);color:var(--text-dim);font-size:11px;width:140px" oninput="filterLensChips()">
+        <button class="lens-tool-btn" onclick="selectAllLenses()" style="font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:rgba(255,255,255,0.03);color:var(--text-muted);cursor:pointer">全选</button>
+        <button class="lens-tool-btn" onclick="clearAllLenses()" style="font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:rgba(255,255,255,0.03);color:var(--text-muted);cursor:pointer">清空</button>
+        <span id="lensFilterCount" style="font-size:10px;color:var(--text-muted);margin-left:auto"></span>
+      </div>
       <div id="lensSelector" class="lens-chips"></div>
       <span id="lensCountLabel" style="font-size:11px;color:var(--text-muted)"><i class="fa-solid fa-circle-info" style="margin-right:4px;font-size:9px"></i>请选择透镜</span>
 
@@ -6063,6 +6070,9 @@ footer a:hover { color: var(--gold); }
         <button id="analyzeBtn" class="btn-primary" onclick="runSimulation()" disabled>
           <i class="fa-solid fa-play" style="margin-right:6px"></i> 启动推演 Simulate
         </button>
+        <button id="demoBtn" class="btn-secondary" onclick="runDemo()" style="margin-left:10px">
+          <i class="fa-solid fa-bolt" style="margin-right:6px;color:var(--gold)"></i> 一键体验
+        </button>
         <div id="lensWarning" style="display:none;margin-top:8px;font-size:12px;color:#ff6b6b;text-align:center"><i class="fa-solid fa-triangle-exclamation" style="margin-right:4px"></i>单次推理建议不超过8个Lens，否则可能超时或返回不完整</div>
       </div>
     </div>
@@ -6071,14 +6081,43 @@ footer a:hover { color: var(--gold); }
     <div id="progressSection" class="progress-section">
       <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
       <span id="progressLabel" class="progress-label"></span>
+      <button id="cancelBtn" class="btn-secondary" onclick="cancelSimulation()" style="display:none;margin-top:8px;padding:6px 16px;font-size:11px"><i class="fa-solid fa-xmark" style="margin-right:4px"></i>取消</button>
     </div>
 
     <!-- Report -->
     <div id="reportSection" class="report-section">
+      <div id="skeletonLoading" style="display:none">
+        <div class="skeleton-card" style="animation:pulse 1.5s ease-in-out infinite;border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:12px;background:rgba(255,255,255,0.02)">
+          <div style="width:40%;height:14px;background:rgba(255,255,255,0.05);border-radius:4px;margin-bottom:12px"></div>
+          <div style="width:80%;height:10px;background:rgba(255,255,255,0.03);border-radius:4px;margin-bottom:8px"></div>
+          <div style="width:60%;height:10px;background:rgba(255,255,255,0.03);border-radius:4px;margin-bottom:8px"></div>
+          <div style="width:70%;height:10px;background:rgba(255,255,255,0.03);border-radius:4px"></div>
+        </div>
+        <div class="skeleton-card" style="animation:pulse 1.5s ease-in-out 0.2s infinite;border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:12px;background:rgba(255,255,255,0.02)">
+          <div style="width:35%;height:14px;background:rgba(255,255,255,0.05);border-radius:4px;margin-bottom:12px"></div>
+          <div style="width:75%;height:10px;background:rgba(255,255,255,0.03);border-radius:4px;margin-bottom:8px"></div>
+          <div style="width:55%;height:10px;background:rgba(255,255,255,0.03);border-radius:4px;margin-bottom:8px"></div>
+          <div style="width:65%;height:10px;background:rgba(255,255,255,0.03);border-radius:4px"></div>
+        </div>
+        <div class="skeleton-card" style="animation:pulse 1.5s ease-in-out 0.4s infinite;border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:12px;background:rgba(255,255,255,0.02)">
+          <div style="width:45%;height:14px;background:rgba(255,255,255,0.05);border-radius:4px;margin-bottom:12px"></div>
+          <div style="width:70%;height:10px;background:rgba(255,255,255,0.03);border-radius:4px;margin-bottom:8px"></div>
+          <div style="width:50%;height:10px;background:rgba(255,255,255,0.03);border-radius:4px;margin-bottom:8px"></div>
+          <div style="width:80%;height:10px;background:rgba(255,255,255,0.03);border-radius:4px"></div>
+        </div>
+      </div>
       <div id="reportBody">
         <div class="report-placeholder">
-          <i class="fa-solid fa-satellite-dish" style="font-size:32px;color:rgba(244,180,0,0.2)"></i>
-          <p><i class="fa-solid fa-circle-info" style="margin-right:6px;color:var(--gold)"></i>选择透镜并输入内容后，系统将模拟各受众群体的真实反应</p>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:40px 20px">
+            <i class="fa-solid fa-satellite-dish" style="font-size:40px;color:rgba(244,180,0,0.15)"></i>
+            <div style="font-size:14px;color:var(--text-dim);text-align:center;line-height:1.8;max-width:420px">
+              <p style="margin-bottom:12px;font-weight:500;color:rgba(244,180,0,0.6)">准备好观察不同文明的视角了吗？</p>
+              <p style="margin-bottom:8px"><span style="color:var(--gold);font-weight:500">1.</span> 在上方输入你想分析的事件、IP 或议题</p>
+              <p style="margin-bottom:8px"><span style="color:var(--gold);font-weight:500">2.</span> 选择至少一个文化透镜作为观察视角</p>
+              <p><span style="color:var(--gold);font-weight:500">3.</span> 点击「启动推演」，AI 将模拟各文化群体的真实反应</p>
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:8px">💡 不确定输入什么？试试「<span style="color:var(--gold);cursor:pointer;text-decoration:underline" onclick="runDemo()">一键体验</span>」</div>
+          </div>
         </div>
       </div>
     </div>
@@ -6086,9 +6125,32 @@ footer a:hover { color: var(--gold); }
 
   <!-- ===== FOOTER ===== -->
   <footer>
-    <p><i class="fa-solid fa-satellite" style="margin-right:6px;color:var(--gold)"></i>Narrative Perception Atlas &middot; V4 &middot; Cross-cultural Narrative Simulation Engine</p>
-    <p style="margin-top:4px"><i class="fa-solid fa-code" style="margin-right:4px;font-size:10px"></i>Built with Chart.js &middot; Tailwind CSS &middot; Font Awesome</p>
+    <p><i class="fa-solid fa-satellite" style="margin-right:6px;color:var(--gold)"></i>Narrative Perception Atlas · 跨文化叙事感知引擎</p>
   </footer>
+
+  <!-- ===== ONBOARDING OVERLAY ===== -->
+  <div id="onboardingOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:10000;align-items:center;justify-content:center">
+    <div style="max-width:400px;text-align:center;padding:40px;animation:reconCardEnter 0.5s ease-out">
+      <i class="fa-solid fa-satellite-dish" style="font-size:48px;color:var(--gold);margin-bottom:20px;display:block"></i>
+      <h2 style="font-size:20px;color:var(--gold);margin-bottom:8px">欢迎来到叙事感知天文台</h2>
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:24px;line-height:1.8">一个理解世界叙事的智能系统。<br>穿越 30 个文明视角，探索叙事如何被看见、被误解、被记住。</p>
+      <div style="text-align:left;margin-bottom:24px">
+        <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:16px">
+          <div style="width:24px;height:24px;border-radius:50%;border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);flex-shrink:0">1</div>
+          <div style="font-size:12px;color:var(--text-dim);line-height:1.6">选择「AI 实验舱」输入你想分析的事件</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:16px">
+          <div style="width:24px;height:24px;border-radius:50%;border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);flex-shrink:0">2</div>
+          <div style="font-size:12px;color:var(--text-dim);line-height:1.6">选择文化透镜，观察不同群体如何解读同一事件</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px">
+          <div style="width:24px;height:24px;border-radius:50%;border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);flex-shrink:0">3</div>
+          <div style="font-size:12px;color:var(--text-dim);line-height:1.6">进入「文明星图」解锁 30 个透镜，完成认知训练</div>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="closeOnboarding()" style="width:100%">开始探索</button>
+    </div>
+  </div>
 
   <!-- ===== ALL_LENSES DATA ===== -->
   <script>
@@ -9363,12 +9425,32 @@ footer a:hover { color: var(--gold); }
         this.renderPath();
         // Narrative Platform UI Upgrade - Explore & Unlock
         this.updateExploreProgress();
+        // 恢复进度
+        var savedProgress = {};
+        try { savedProgress = JSON.parse(localStorage.getItem('npa_explorer_progress') || '{}'); } catch(e) {}
+        if (savedProgress.exploredLenses && savedProgress.exploredLenses.length > 0) {
+          this.exploredLenses = new Set(savedProgress.exploredLenses);
+        }
+        if (savedProgress.exploredCases && savedProgress.exploredCases.length > 0) {
+          this.exploredCases = new Set(savedProgress.exploredCases);
+        }
         // 恢复 XP 显示
         var savedXP = parseInt(localStorage.getItem('knowledgeXP') || '0');
         if (savedXP > 0) {
           var xpEl = document.getElementById('spaceXPValue');
           if (xpEl) xpEl.textContent = savedXP;
         }
+      },
+
+      saveProgress() {
+        try {
+          localStorage.setItem('npa_explorer_progress', JSON.stringify({
+            exploredLenses: this.exploredLenses ? Array.from(this.exploredLenses) : [],
+            exploredCases: this.exploredCases ? Array.from(this.exploredCases) : [],
+            knowledgeXP: parseInt(localStorage.getItem('knowledgeXP') || '0'),
+            lastUpdated: Date.now()
+          }));
+        } catch(e) {}
       },
 
       /* Explorer UX - Entrance Experience: show Universe from Entrance */
@@ -10618,6 +10700,7 @@ footer a:hover { color: var(--gold); }
       _addXP(amount) {
         var total = parseInt(localStorage.getItem('knowledgeXP') || '0') + amount;
         localStorage.setItem('knowledgeXP', total);
+        this.saveProgress();
         var xpEl = document.getElementById('spaceXPValue');
         if (xpEl) xpEl.textContent = total;
       },
@@ -10816,6 +10899,7 @@ footer a:hover { color: var(--gold); }
         if (!this.exploredLenses.has(lens.id)) {
           this.exploredLenses.add(lens.id);
           localStorage.setItem('exploredLenses', JSON.stringify([...this.exploredLenses]));
+          this.saveProgress();
         }
         this.updateExploreProgress();
 
@@ -11264,6 +11348,7 @@ footer a:hover { color: var(--gold); }
         if (!this.exploredLenses.has(lens.id)) {
           this.exploredLenses.add(lens.id);
           localStorage.setItem('exploredLenses', JSON.stringify([...this.exploredLenses]));
+          this.saveProgress();
           this.updateExploreProgress();
         }
 
@@ -11403,6 +11488,7 @@ footer a:hover { color: var(--gold); }
         if (!this.exploredCases.has(caseKey)) {
           this.exploredCases.add(caseKey);
           localStorage.setItem('exploredCases', JSON.stringify([...this.exploredCases]));
+          this.saveProgress();
           var evtName = c.event || c.title || 'New Case';
           this.showUnlockToast(evtName);
           this.updateExploreProgress();
@@ -12154,7 +12240,8 @@ footer a:hover { color: var(--gold); }
       render(result) {
         const body = document.getElementById('reportBody');
         if (!result.success) {
-          body.innerHTML = '<div style="text-align:center;padding:40px"><p style="font-size:13px;color:var(--text-muted)">' + (result.error || '分析失败') + '</p></div>';
+          var errorMsg = result.error || '分析失败';
+          body.innerHTML = '<div class="error-card" style="text-align:center;padding:40px 20px;margin:20px auto;max-width:500px;border:1px solid rgba(255,100,100,0.2);border-radius:12px;background:rgba(255,80,80,0.05)"><div style="font-size:40px;margin-bottom:16px">🔍</div><div style="font-size:14px;color:var(--text-dim);margin-bottom:12px;line-height:1.6">分析引擎暂时遇到了问题</div><div style="font-size:11px;color:var(--text-muted);margin-bottom:20px;background:rgba(0,0,0,0.2);padding:8px 12px;border-radius:6px;display:inline-block;max-width:100%;word-break:break-all">' + errorMsg + '</div><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><button class="btn-primary" onclick="runSimulation()" style="padding:8px 20px;font-size:12px"><i class="fa-solid fa-rotate-right" style="margin-right:6px"></i>重试</button><button class="btn-secondary" onclick="document.getElementById(\'narrativeInput\').value=\'\'; document.querySelectorAll(\'.lens-chip\').forEach(function(c){c.click()});" style="padding:8px 20px;font-size:12px"><i class="fa-solid fa-eraser" style="margin-right:6px"></i>清空重来</button></div></div>';
           return;
         }
         let html = '';
@@ -12319,7 +12406,7 @@ footer a:hover { color: var(--gold); }
           html += '</div></div>';
         }
 
-        body.innerHTML = html;
+        body.innerHTML = '<div class="report-actions" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap"><button class="btn-secondary" onclick="copyReport()" style="padding:6px 14px;font-size:11px"><i class="fa-solid fa-copy" style="margin-right:4px"></i>复制全文</button><button class="btn-secondary" onclick="shareReport()" style="padding:6px 14px;font-size:11px"><i class="fa-solid fa-share-nodes" style="margin-right:4px"></i>分享</button><button class="btn-secondary" onclick="window.scrollTo({top:0,behavior:\'smooth\'})" style="padding:6px 14px;font-size:11px"><i class="fa-solid fa-arrow-up" style="margin-right:4px"></i>回到顶部</button></div>' + html;
       }
     };
   </script>
@@ -12330,30 +12417,70 @@ footer a:hover { color: var(--gold); }
     const state = { selectedLenses: new Set(), narrativeText: '', isSimulating: false };
 
     // Init lens chips for simulator
-    (function() {
-      const sel = document.getElementById('lensSelector');
+    function renderLensChips() {
+      var sel = document.getElementById('lensSelector');
       if (!sel) return;
-      ALL_LENSES.forEach(lens => {
-        const chip = document.createElement('div');
+      sel.innerHTML = '';
+      var regionColors = {
+        'East Asia': 'rgba(244,180,0,0.3)',
+        'North America': 'rgba(100,180,255,0.3)',
+        'Europe': 'rgba(180,140,255,0.3)',
+        'South Asia': 'rgba(255,160,100,0.3)',
+        'Southeast Asia': 'rgba(100,220,180,0.3)',
+        'Middle East': 'rgba(100,220,180,0.3)',
+        'Africa': 'rgba(255,200,100,0.3)',
+        'Latin America': 'rgba(255,120,160,0.3)',
+        'Global': 'rgba(180,180,180,0.3)'
+      };
+      ALL_LENSES.forEach(function(lens) {
+        var chip = document.createElement('div');
         chip.className = 'lens-chip';
         chip.dataset.id = lens.id;
+        chip.dataset.region = lens.region || 'Global';
+        var borderColor = regionColors[lens.region] || 'rgba(180,180,180,0.3)';
+        chip.style.borderColor = borderColor;
         chip.textContent = lens.id.substring(0,6) + ' ' + lens.nameZh.substring(0,8);
-        chip.onclick = () => {
+        if (state.selectedLenses.has(lens.id)) chip.classList.add('selected');
+        chip.onclick = function() {
           if (state.selectedLenses.has(lens.id)) { state.selectedLenses.delete(lens.id); chip.classList.remove('selected'); }
           else { state.selectedLenses.add(lens.id); chip.classList.add('selected'); }
-          const n = state.selectedLenses.size;
+          var n = state.selectedLenses.size;
           document.getElementById('lensCountLabel').textContent = n > 0 ? '\u5df2\u9009 ' + n + ' \u4e2a\u900f\u955c' : '\u8bf7\u9009\u62e9\u900f\u955c';
           validate();
         };
         sel.appendChild(chip);
       });
-    })();
+      filterLensChips();
+    }
+    renderLensChips();
 
     function validate() {
       const btn = document.getElementById('analyzeBtn');
       btn.disabled = !(state.narrativeText.length > 1 && state.selectedLenses.size > 0);
       const warn = document.getElementById('lensWarning');
       if (warn) warn.style.display = state.selectedLenses.size > 8 ? 'block' : 'none';
+    }
+
+    function filterLensChips() {
+      var q = (document.getElementById('lensSearch') || {}).value || '';
+      q = q.toLowerCase();
+      var chips = document.querySelectorAll('.lens-chip');
+      var visible = 0;
+      chips.forEach(function(c) {
+        var text = (c.textContent || '').toLowerCase();
+        if (!q || text.indexOf(q) >= 0) { c.style.display = ''; visible++; }
+        else { c.style.display = 'none'; }
+      });
+      var countEl = document.getElementById('lensFilterCount');
+      if (countEl) countEl.textContent = visible + ' / ' + chips.length + ' 个透镜';
+    }
+    function selectAllLenses() {
+      document.querySelectorAll('.lens-chip').forEach(function(c) {
+        if (!c.classList.contains('selected')) c.click();
+      });
+    }
+    function clearAllLenses() {
+      document.querySelectorAll('.lens-chip.selected').forEach(function(c) { c.click(); });
     }
 
     const inputEl = document.getElementById('narrativeInput');
@@ -12529,6 +12656,14 @@ footer a:hover { color: var(--gold); }
       }
     }
 
+    function runDemo() {
+      var input = document.getElementById('narrativeInput');
+      if (input) input.value = '哪吒2：全球票房突破150亿，海外观众热议中国神话叙事';
+      var chips = document.querySelectorAll('.lens-chip');
+      if (chips.length > 0) { chips[0].click(); chips[1].click(); chips[2].click(); }
+      if (typeof runSimulation === 'function') runSimulation();
+    }
+
     async function runSimulation() {
       if (state.isSimulating) return;
       state.isSimulating = true;
@@ -12542,6 +12677,14 @@ footer a:hover { color: var(--gold); }
       const label = document.getElementById('progressLabel');
       prog.style.display = '';
 
+      // Show skeleton, hide reportBody, show cancel button
+      var skeleton = document.getElementById('skeletonLoading');
+      var reportBody = document.getElementById('reportBody');
+      var cancelBtn = document.getElementById('cancelBtn');
+      if (skeleton) skeleton.style.display = '';
+      if (reportBody) reportBody.style.display = 'none';
+      if (cancelBtn) cancelBtn.style.display = '';
+
       function setProgress(p, l) { fill.style.width = p + '%'; label.textContent = l; }
 
       try {
@@ -12552,7 +12695,8 @@ footer a:hover { color: var(--gold); }
         setProgress(98, '渲染报告...');
 
         if (!result.success) {
-          document.getElementById('reportBody').innerHTML = '<div class="reaction-block" style="border-color:rgba(255,68,68,0.3);background:rgba(255,68,68,0.05)"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><i class="fa-solid fa-triangle-exclamation" style="color:#ff4444"></i><span style="font-size:12px;color:#ff4444">推理失败</span></div><div style="font-size:12px;color:var(--text-dim);line-height:1.7">' + (result.error || '未知错误') + '</div></div>';
+          var errorMsg = result.error || '未知错误';
+          document.getElementById('reportBody').innerHTML = '<div class="error-card" style="text-align:center;padding:40px 20px;margin:20px auto;max-width:500px;border:1px solid rgba(255,100,100,0.2);border-radius:12px;background:rgba(255,80,80,0.05)"><div style="font-size:40px;margin-bottom:16px">🔍</div><div style="font-size:14px;color:var(--text-dim);margin-bottom:12px;line-height:1.6">分析引擎暂时遇到了问题</div><div style="font-size:11px;color:var(--text-muted);margin-bottom:20px;background:rgba(0,0,0,0.2);padding:8px 12px;border-radius:6px;display:inline-block;max-width:100%;word-break:break-all">' + errorMsg + '</div><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><button class="btn-primary" onclick="runSimulation()" style="padding:8px 20px;font-size:12px"><i class="fa-solid fa-rotate-right" style="margin-right:6px"></i>重试</button><button class="btn-secondary" onclick="document.getElementById(\'narrativeInput\').value=\'\'; document.querySelectorAll(\'.lens-chip\').forEach(function(c){c.click()});" style="padding:8px 20px;font-size:12px"><i class="fa-solid fa-eraser" style="margin-right:6px"></i>清空重来</button></div></div>';
           document.getElementById('reportSection').classList.add('visible');
         } else {
           ReportRendererV10.render(result);
@@ -12575,13 +12719,59 @@ footer a:hover { color: var(--gold); }
         setTimeout(function(){ document.getElementById('reportSection').scrollIntoView({ behavior: 'smooth' }); }, 200);
       } catch(e) {
         setProgress(0, '');
-        document.getElementById('reportBody').innerHTML = '<div class="reaction-block" style="border-color:rgba(255,68,68,0.3);background:rgba(255,68,68,0.05)"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><i class="fa-solid fa-triangle-exclamation" style="color:#ff4444"></i><span style="font-size:12px;color:#ff4444">推理异常</span></div><div style="font-size:12px;color:var(--text-dim);line-height:1.7">' + e.message + '</div></div>';
+        var errorMsg = e.message || '未知错误';
+        document.getElementById('reportBody').innerHTML = '<div class="error-card" style="text-align:center;padding:40px 20px;margin:20px auto;max-width:500px;border:1px solid rgba(255,100,100,0.2);border-radius:12px;background:rgba(255,80,80,0.05)"><div style="font-size:40px;margin-bottom:16px">🔍</div><div style="font-size:14px;color:var(--text-dim);margin-bottom:12px;line-height:1.6">分析引擎暂时遇到了问题</div><div style="font-size:11px;color:var(--text-muted);margin-bottom:20px;background:rgba(0,0,0,0.2);padding:8px 12px;border-radius:6px;display:inline-block;max-width:100%;word-break:break-all">' + errorMsg + '</div><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><button class="btn-primary" onclick="runSimulation()" style="padding:8px 20px;font-size:12px"><i class="fa-solid fa-rotate-right" style="margin-right:6px"></i>重试</button><button class="btn-secondary" onclick="document.getElementById(\'narrativeInput\').value=\'\'; document.querySelectorAll(\'.lens-chip\').forEach(function(c){c.click()});" style="padding:8px 20px;font-size:12px"><i class="fa-solid fa-eraser" style="margin-right:6px"></i>清空重来</button></div></div>';
         document.getElementById('reportSection').classList.add('visible');
         console.error('[runSimulation] Error:', e);
       } finally {
         btn.innerHTML = '<i class="fa-solid fa-rotate"></i> 重新模拟';
         btn.disabled = false;
         state.isSimulating = false;
+        var skeleton = document.getElementById('skeletonLoading');
+        var reportBody = document.getElementById('reportBody');
+        var cancelBtn = document.getElementById('cancelBtn');
+        if (skeleton) skeleton.style.display = 'none';
+        if (reportBody) reportBody.style.display = '';
+        if (cancelBtn) cancelBtn.style.display = 'none';
+      }
+    }
+
+    function cancelSimulation() {
+      // Simple reset: reload the page to cancel any in-flight requests
+      location.reload();
+    }
+
+    function copyReport() {
+      var reportBody = document.getElementById('reportBody');
+      if (!reportBody) return;
+      var text = reportBody.innerText;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(function() {
+          alert('报告已复制到剪贴板');
+        }).catch(function() {
+          fallbackCopy(text);
+        });
+      } else { fallbackCopy(text); }
+    }
+    function fallbackCopy(text) {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+      alert('报告已复制到剪贴板');
+    }
+    function shareReport() {
+      var url = window.location.href;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(function() {
+          alert('链接已复制，分享给朋友吧');
+        });
+      } else {
+        var ta = document.createElement('textarea');
+        ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
+        alert('链接已复制，分享给朋友吧');
       }
     }
 
@@ -12813,6 +13003,17 @@ footer a:hover { color: var(--gold); }
       if (ok) validate();
     });
     console.log('[NPA V13] Narrative Engine Ready — AI引擎已就绪.');
+
+    // Onboarding check
+    if (!localStorage.getItem('npa_onboarded')) {
+      var overlay = document.getElementById('onboardingOverlay');
+      if (overlay) overlay.style.display = 'flex';
+    }
+    function closeOnboarding() {
+      var overlay = document.getElementById('onboardingOverlay');
+      if (overlay) overlay.style.display = 'none';
+      localStorage.setItem('npa_onboarded', '1');
+    }
 
     // ========== IMMERSIVE WORLD MAP BACKGROUND SYSTEM ==========
     (function(){
