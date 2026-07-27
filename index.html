@@ -4328,6 +4328,28 @@ footer a:hover { color: var(--gold); }
     100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
   }
 
+  /* Explorer UX - Recon Entry Animations (Lens Entry Overlay) */
+  @keyframes reconCardEnter { from { transform: scale(0.8) translateY(20px); opacity: 0; filter: blur(10px); } to { transform: scale(1) translateY(0); opacity: 1; filter: blur(0); } }
+  @keyframes reconTextSlide { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  @keyframes reconOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+  .recon-overlay { animation: reconOverlayIn 0.4s ease-out; }
+  .recon-card { animation: reconCardEnter 0.5s ease-out both; }
+  .recon-line { opacity: 0; animation: reconTextSlide 0.4s ease-out both; }
+
+  /* Explorer UX - Stage Briefing Card Frame */
+  .briefing-card { border: 1px solid rgba(244,180,0,0.25); border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; position: relative; background: rgba(244,180,0,0.03); }
+  .briefing-card::before, .briefing-card::after { content: ''; position: absolute; width: 12px; height: 12px; border-color: var(--gold); border-style: solid; border-width: 0; }
+  .briefing-card::before { top: -1px; left: -1px; border-top-width: 2px; border-left-width: 2px; border-top-left-radius: 8px; }
+  .briefing-card::after { bottom: -1px; right: -1px; border-bottom-width: 2px; border-right-width: 2px; border-bottom-right-radius: 8px; }
+  @keyframes briefingPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(244,180,0,0); } 50% { box-shadow: 0 0 15px 0 rgba(244,180,0,0.08); } }
+  .briefing-card { animation: briefingPulse 3s ease-in-out infinite; }
+
+  /* Explorer UX - Stage 4 Verdict Card Animations */
+  @keyframes verdictCardFlip { 0% { transform: perspective(800px) rotateY(90deg); opacity: 0; } 40% { transform: perspective(800px) rotateY(-5deg); opacity: 1; } 60% { transform: perspective(800px) rotateY(3deg); } 100% { transform: perspective(800px) rotateY(0deg); opacity: 1; } }
+  @keyframes verdictScanline { 0% { left: -100%; } 100% { left: 100%; } }
+  .verdict-card { animation: verdictCardFlip 0.6s ease-out both; border: 1px solid rgba(244,180,0,0.3); border-radius: 12px; padding: 24px; position: relative; overflow: hidden; background: rgba(10,10,20,0.95); }
+  .verdict-card::after { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); animation: verdictScanline 0.8s ease-out 0.3s both; }
+
   /* Explorer UX - Lens Entry Modal (Mission Briefing) */
   .lens-entry-modal {
     position: fixed;
@@ -9721,7 +9743,7 @@ footer a:hover { color: var(--gold); }
           '情报已就绪，来判断哪些说法属于他们',
           '记住：混入的干扰项也在其中，别被骗了'
         ];
-        html += '<div style="text-align:center;padding:14px 0 18px;opacity:0.7;font-size:13px;font-family:VT323,monospace">';
+        html += '<div class="briefing-card" style="text-align:center;padding:14px 20px;opacity:0.9;font-size:13px;font-family:VT323,monospace">';
         html += '<div style="color:var(--gold);font-size:11px;letter-spacing:0.1em;margin-bottom:6px">MISSION BRIEFING</div>';
         stage1Briefings.forEach(function(b, bi) {
           html += '<div style="animation:fadeInUp 0.4s ' + (bi*0.15) + 's both">> ' + b + '</div>';
@@ -9829,7 +9851,7 @@ footer a:hover { color: var(--gold); }
         html += '<div class="mission-step-content" data-step="2">';
 
         // Stage 2 引导语
-        html += '<div style="text-align:center;padding:14px 0 18px;opacity:0.7;font-size:13px;font-family:VT323,monospace">';
+        html += '<div class="briefing-card" style="text-align:center;padding:14px 20px;opacity:0.9;font-size:13px;font-family:VT323,monospace">';
         html += '<div style="color:var(--gold);font-size:11px;letter-spacing:0.1em;margin-bottom:6px">DETECTION PHASE</div>';
         html += '<div>> 信号已截获，判断他们的真实反应</div>';
         html += '<div>> 三个选项中只有一个是对的，选错了也能学到东西</div>';
@@ -9894,7 +9916,7 @@ footer a:hover { color: var(--gold); }
 
         // Stage 2 完成后直接显示下一步按钮（误解路径已移除）
         html += '<div id="s2NextWrap" style="display:none;text-align:center;margin-top:16px">';
-        html += '  <button class="mission-nav-btn primary" onclick="LensExplorer._goToStep(3)">下一步 <i class="fa-solid fa-arrow-right"></i></button>';
+        html += '  <button class="mission-nav-btn primary" onclick="LensExplorer._enterStageFromS2(3)">下一步 <i class="fa-solid fa-arrow-right"></i></button>';
         html += '</div>';
 
         html += '</div>';
@@ -9903,7 +9925,7 @@ footer a:hover { color: var(--gold); }
         html += '<div class="mission-step-content" data-step="3">';
 
         // Stage 3 引导语
-        html += '<div style="text-align:center;padding:14px 0 18px;opacity:0.7;font-size:13px;font-family:VT323,monospace">';
+        html += '<div class="briefing-card" style="text-align:center;padding:14px 20px;opacity:0.9;font-size:13px;font-family:VT323,monospace">';
         html += '<div style="color:var(--gold);font-size:11px;letter-spacing:0.1em;margin-bottom:6px">FIELD INTEL</div>';
         html += '<div>> 真实案例来了，预测他们怎么看</div>';
         html += '<div>> 每个案例都来自不同文化视角的解读</div>';
@@ -9969,7 +9991,7 @@ footer a:hover { color: var(--gold); }
         html += '<div class="mission-step-content" data-step="4">';
 
         // Stage 4 引导语
-        html += '<div style="text-align:center;padding:14px 0 18px;opacity:0.7;font-size:13px;font-family:VT323,monospace">';
+        html += '<div class="briefing-card" style="text-align:center;padding:14px 20px;opacity:0.9;font-size:13px;font-family:VT323,monospace">';
         html += '<div style="color:var(--gold);font-size:11px;letter-spacing:0.1em;margin-bottom:6px">FINAL VERDICT</div>';
         html += '<div>> 最后的判定时刻，准备好接受挑战了吗？</div>';
         html += '<div>> 三道真伪题，看看你学到了多少</div>';
@@ -9977,7 +9999,7 @@ footer a:hover { color: var(--gold); }
 
         // Stage 4 "准备好了"弹窗遮罩
         html += '<div id="stage4ReadyOverlay" style="position:fixed;inset:0;z-index:100;background:rgba(2,4,10,0.92);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px)">';
-        html += '  <div style="text-align:center;max-width:400px;padding:40px 32px">';
+        html += '  <div class="verdict-card" style="text-align:center;max-width:400px;padding:40px 32px">';
         html += '    <div style="width:64px;height:64px;border-radius:50%;border:2px solid var(--gold);margin:0 auto 24px;display:flex;align-items:center;justify-content:center;animation:pulse-gold 2s infinite"><i class="fa-solid fa-gavel" style="font-size:24px;color:var(--gold)"></i></div>';
         html += '    <div style="font-family:Orbitron,sans-serif;font-size:14px;color:var(--gold);letter-spacing:0.15em;margin-bottom:16px">FINAL VERDICT</div>';
         html += '    <div style="font-size:15px;color:rgba(255,255,255,0.8);line-height:1.7;margin-bottom:8px">最后的判定时刻</div>';
@@ -9997,8 +10019,10 @@ footer a:hover { color: var(--gold); }
         html += '<div id="checkpointQuizContainer">';
         if (questions.length > 0) {
           questions.forEach(function(q, qi){
-            html += '<div class="checkpoint-question" data-qidx="' + qi + '">';
-            html += '<div class="checkpoint-question-title">Q' + (qi+1) + ' · ' + q.question + '</div>';
+            // 需求7：一次只显示一题，默认第1题可见，其余隐藏
+            var qDisplay = (qi === 0) ? 'block' : 'none';
+            html += '<div class="checkpoint-question" data-qidx="' + qi + '" style="display:' + qDisplay + '">';
+            html += '<div class="checkpoint-question-title">Q' + (qi+1) + ' / ' + questions.length + ' · ' + q.question + '</div>';
             html += '<div class="challenge-options" style="gap:8px">';
             q.options.forEach(function(opt, oi){
               html += '<div class="challenge-option" data-qi="' + qi + '" data-oi="' + oi + '" style="padding:10px 14px" onclick="LensExplorer._selectCheckpointOption(' + qi + ',' + oi + ')">' +
@@ -10007,6 +10031,11 @@ footer a:hover { color: var(--gold); }
             });
             html += '</div>';
             html += '<div class="checkpoint-feedback"></div>';
+            // 需求7：每题的"下一题"按钮容器（选择答案后显示）
+            var nextLabel = (qi === questions.length - 1) ? '查看最终评分' : '下一题';
+            html += '<div class="checkpoint-next-wrap" data-qidx="' + qi + '" style="display:none;text-align:center;margin-top:14px">';
+            html += '<button class="mission-nav-btn primary" onclick="LensExplorer._nextCheckpointQuestion(' + qi + ')">' + nextLabel + ' <i class="fa-solid fa-arrow-right"></i></button>';
+            html += '</div>';
             html += '</div>';
           });
         }
@@ -10034,17 +10063,17 @@ footer a:hover { color: var(--gold); }
         detailEl.scrollIntoView({ behavior: 'smooth' });
 
         // Lens 入场弹窗：身份切换提示
-        var overlayHtml = '<div id="lensEntryOverlay" style="position:fixed;inset:0;z-index:100;background:rgba(2,4,10,0.94);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(10px);animation:fadeIn 0.5s ease">';
-        overlayHtml += '  <div style="text-align:center;max-width:420px;padding:36px 28px">';
+        var overlayHtml = '<div id="lensEntryOverlay" class="recon-overlay" style="position:fixed;inset:0;z-index:100;background:rgba(2,4,10,0.94);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(10px)">';
+        overlayHtml += '  <div class="recon-card" style="text-align:center;max-width:420px;padding:36px 28px">';
         overlayHtml += '    <div style="width:72px;height:72px;border-radius:50%;border:2px solid var(--gold);margin:0 auto 20px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 30px rgba(244,180,0,0.2)"><span style="font-size:28px;color:var(--gold);font-weight:700;font-family:Orbitron,sans-serif">' + (lens.region ? lens.region.substring(0,2).toUpperCase() : '??') + '</span></div>';
         overlayHtml += '    <div style="font-family:VT323,monospace;font-size:11px;color:var(--gold);letter-spacing:0.12em;margin-bottom:10px">LENS ' + lens.id.replace('Lens','') + ' ACTIVATED</div>';
         overlayHtml += '    <div style="font-size:18px;color:rgba(255,255,255,0.9);line-height:1.5;margin-bottom:6px">' + (lens.nameZh || lens.name) + '</div>';
         overlayHtml += '    <div style="font-size:12px;color:var(--text-muted);line-height:1.6;margin-bottom:24px">' + (lens.nameEn || '') + '</div>';
         overlayHtml += '    <div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.7;padding:12px 16px;border-radius:10px;background:rgba(244,180,0,0.06);border:1px solid rgba(244,180,0,0.15);margin-bottom:24px">';
-        overlayHtml += '      <div style="color:var(--gold);margin-bottom:4px">> 进入侦测模式</div>';
-        overlayHtml += '      <div>你的身份：跨文化情报分析师</div>';
-        overlayHtml += '      <div>目标：理解「' + (lens.nameZh || '') + '」的认知框架</div>';
-        overlayHtml += '      <div style="color:rgba(255,100,100,0.7);margin-top:4px">> 注意：干扰项已混入，保持警惕</div>';
+        overlayHtml += '      <div class="recon-line" style="color:var(--gold);margin-bottom:4px;animation-delay:0ms">&gt; 进入侦测模式</div>';
+        overlayHtml += '      <div class="recon-line" style="animation-delay:100ms">你的身份：跨文化情报分析师</div>';
+        overlayHtml += '      <div class="recon-line" style="animation-delay:200ms">目标：理解「' + (lens.nameZh || '') + '」的认知框架</div>';
+        overlayHtml += '      <div class="recon-line" style="color:rgba(255,100,100,0.7);margin-top:4px;animation-delay:300ms">&gt; 注意：干扰项已混入，保持警惕</div>';
         overlayHtml += '    </div>';
         overlayHtml += '    <button class="mission-nav-btn primary" style="font-size:14px;padding:12px 36px;cursor:pointer" onclick="document.getElementById(\'lensEntryOverlay\').style.display=\'none\'">开始侦测</button>';
         overlayHtml += '  </div>';
@@ -10181,9 +10210,9 @@ footer a:hover { color: var(--gold); }
       },
 
       _nextMissionStep() {
-        // If on step 4 (Checkpoint), try to submit
+        // 需求7：Stage 4 改为逐题模式，全局下一步按钮已隐藏，不再触发 _submitCheckpoint
+        // （每题的"下一题"按钮由 _nextCheckpointQuestion 处理，最后一题完成后显示 Final Report）
         if (this.currentMissionStep === 4) {
-          this._submitCheckpoint();
           return;
         }
         if (this.currentMissionStep < 4) {
@@ -10242,9 +10271,14 @@ footer a:hover { color: var(--gold); }
             });
           }
         }
-        // Scroll to top of mission area when switching steps
-        var detailEl = document.getElementById('lensDetail');
-        if (detailEl) detailEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Scroll to top of mission area ONLY when the step actually changes (首次进入某个Stage)
+        // 这样在选择答案/提交后调用 _updateMissionProgress 不会触发滚动（需求3 Bug A / 需求4）
+        var stepChanged = (this._lastRenderedStep !== this.currentMissionStep);
+        this._lastRenderedStep = this.currentMissionStep;
+        if (stepChanged) {
+          var detailEl = document.getElementById('lensDetail');
+          if (detailEl) detailEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
 
         // Update nav buttons
         var prevBtn = document.getElementById('missionPrevBtn');
@@ -10252,48 +10286,105 @@ footer a:hover { color: var(--gold); }
         if (prevBtn) prevBtn.disabled = (this.currentMissionStep <= 1);
         if (nextBtn) {
           if (this.currentMissionStep === 4) {
-            nextBtn.innerHTML = '提交 <i class="fa-solid fa-check"></i>';
+            // 需求7：Stage 4 改为逐题模式，隐藏全局下一步按钮（每题有自己的"下一题"按钮）
+            nextBtn.style.display = 'none';
           } else {
+            // 恢复显示（从 Stage 4 回退到其他 step 时）
+            nextBtn.style.display = '';
             nextBtn.innerHTML = '下一步 <i class="fa-solid fa-arrow-right"></i>';
           }
         }
       },
 
       /* Mission System - 4-Step Learning Path */
+      /* 需求7：选择选项后立即显示该题正确/错误状态、正确答案、解释，并显示"下一题"按钮 */
       _selectCheckpointOption(qIdx, optIdx) {
         if (this._checkpointSubmitted) return;
+        // 若该题已经作答（已显示反馈），不允许重复选择
+        if (this._missionAnswers[qIdx] !== undefined) return;
         this._missionAnswers[qIdx] = optIdx;
 
-        // Update UI: clear other selections in this question
+        var self = this;
+        var q = this._checkpointQuestions[qIdx];
+        if (!q) return;
         var qEl = document.querySelector('.checkpoint-question[data-qidx="' + qIdx + '"]');
         if (!qEl) return;
+
+        // 锁定该题所有选项（不可再选）
         var opts = qEl.querySelectorAll('.challenge-option');
-        opts.forEach(function(o){ o.classList.remove('selected'); });
-        // 用 data-oi 属性精确定位选中的选项
+        opts.forEach(function(o){
+          o.style.pointerEvents = 'none';
+          o.classList.remove('selected');
+          var oi = parseInt(o.getAttribute('data-oi'), 10);
+          // 标记正确答案为绿色
+          if (oi === q.correctIndex) {
+            o.classList.add('correct');
+          }
+          // 标记用户选错的选项为红色
+          if (oi === optIdx && optIdx !== q.correctIndex) {
+            o.classList.add('incorrect');
+          }
+        });
+        // 标记用户选中的选项
         var selectedOpt = qEl.querySelector('.challenge-option[data-oi="' + optIdx + '"]');
         if (selectedOpt) selectedOpt.classList.add('selected');
 
-        // 检查是否所有问题都已回答，启用提交按钮
-        var allAnswered = true;
-        for (var i = 0; i < this._checkpointQuestions.length; i++) {
-          if (this._missionAnswers[i] === undefined) {
-            allAnswered = false;
-            break;
-          }
+        var isCorrect = (optIdx === q.correctIndex);
+        var feedbackEl = qEl.querySelector('.checkpoint-feedback');
+        if (feedbackEl) {
+          feedbackEl.className = 'checkpoint-feedback show ' + (isCorrect ? 'correct' : 'incorrect');
+          var correctAnswerText = q.options[q.correctIndex] || '';
+          var explainText = q.explanation || '';
+          feedbackEl.innerHTML =
+            '<div style="font-size:14px;font-weight:600;margin-bottom:6px">' +
+              (isCorrect
+                ? '<i class="fa-solid fa-check-circle" style="color:#4ade80"></i> 回答正确'
+                : '<i class="fa-solid fa-times-circle" style="color:#f87171"></i> 回答错误') +
+            '</div>' +
+            '<div style="font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:6px">正确答案：<b style="color:var(--gold)">' + correctAnswerText + '</b></div>' +
+            (explainText ? '<div style="font-size:12px;color:var(--text-muted);line-height:1.6"><i class="fa-solid fa-lightbulb" style="margin-right:4px;color:var(--gold)"></i>' + explainText + '</div>' : '');
         }
-        // 同时尝试 checkpointSubmitBtn 和 missionNextBtn（Stage 4 的提交按钮实际是 missionNextBtn）
-        var submitBtn = document.getElementById('checkpointSubmitBtn');
+
+        // 显示该题的"下一题"按钮
+        var nextWrap = qEl.querySelector('.checkpoint-next-wrap[data-qidx="' + qIdx + '"]');
+        if (nextWrap) nextWrap.style.display = 'block';
+
+        // 隐藏全局下一步按钮（Stage 4 改为逐题模式，不再用全局提交按钮）
         var missionNextBtn = document.getElementById('missionNextBtn');
-        if (submitBtn) {
-          submitBtn.disabled = !allAnswered;
-          if (allAnswered) submitBtn.classList.add('enabled');
-          else submitBtn.classList.remove('enabled');
-        }
         if (missionNextBtn && this.currentMissionStep === 4) {
-          missionNextBtn.disabled = !allAnswered;
-          missionNextBtn.style.opacity = allAnswered ? '1' : '0.4';
-          if (allAnswered) missionNextBtn.classList.add('enabled');
-          else missionNextBtn.classList.remove('enabled');
+          missionNextBtn.style.display = 'none';
+        }
+      },
+
+      /* 需求7：点击"下一题"进入下一题；最后一题完成后显示三维评分（Final Report） */
+      _nextCheckpointQuestion(qIdx) {
+        var self = this;
+        var questions = this._checkpointQuestions || [];
+        var nextIdx = qIdx + 1;
+
+        // 隐藏当前题
+        var curQ = document.querySelector('.checkpoint-question[data-qidx="' + qIdx + '"]');
+        if (curQ) curQ.style.display = 'none';
+
+        if (nextIdx < questions.length) {
+          // 显示下一题
+          var nextQ = document.querySelector('.checkpoint-question[data-qidx="' + nextIdx + '"]');
+          if (nextQ) {
+            nextQ.style.display = 'block';
+            // 滚动到题目区，避免下一题在视口外
+            var quizContainer = document.getElementById('checkpointQuizContainer');
+            if (quizContainer) quizContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        } else {
+          // 最后一题已完成，显示三维评分
+          this._checkpointSubmitted = true;
+          // 隐藏整个 quiz 容器，显示 Final Report
+          setTimeout(function() {
+            self._renderFinalReport();
+          }, 300);
+          // 隐藏导航按钮（Final Report 中有自己的按钮）
+          var nav = document.querySelector('.mission-nav');
+          if (nav) nav.style.display = 'none';
         }
       },
 
@@ -10612,26 +10703,42 @@ footer a:hover { color: var(--gold); }
           var nextWrap = document.getElementById('s2NextWrap');
           if (nextWrap) nextWrap.style.display = 'block';
 
+          // 需求3 Bug B：隐藏旧的全局"下一步"按钮，避免与 s2NextWrap 重复
+          var globalNextBtn = document.getElementById('missionNextBtn');
+          if (globalNextBtn) globalNextBtn.style.display = 'none';
+
           // 解锁 Stage 3
           self._highestMissionStep = Math.max(self._highestMissionStep || 1, 3);
           self._updateMissionProgress();
         }, 800);
       },
 
+      /* 需求3 Bug B：Stage 2 完成后，从 s2NextWrap 进入下一个 Stage
+         恢复全局下一步按钮显示，并真正切换 step（触发滚动） */
+      _enterStageFromS2(step) {
+        // 恢复全局下一步按钮显示
+        var globalNextBtn = document.getElementById('missionNextBtn');
+        if (globalNextBtn) globalNextBtn.style.display = '';
+        // 真正切换 step（_updateMissionProgress 会因 step 变化触发滚动）
+        this.currentMissionStep = step;
+        if (!this._highestMissionStep || step > this._highestMissionStep) {
+          this._highestMissionStep = step;
+        }
+        this._updateMissionProgress();
+      },
+
       /* Explorer UX - Stage 3+4 Gamified: Submit checkpoint and show Final Report */
+      /* 需求7：_submitCheckpoint 保留作为兜底，但不再重复标记选项（_selectCheckpointOption 已逐题标记）。
+         新流程下由 _nextCheckpointQuestion 在最后一题完成时直接调用 _renderFinalReport。 */
       _submitCheckpoint() {
         var self = this;
         var questions = this._checkpointQuestions || [];
         var allAnswered = true;
-        var allCorrect = true;
 
         questions.forEach(function(q, qi){
           var userAns = self._missionAnswers[qi];
           if (userAns === undefined) {
             allAnswered = false;
-          }
-          if (userAns !== q.correctIndex) {
-            allCorrect = false;
           }
         });
 
@@ -10642,35 +10749,10 @@ footer a:hover { color: var(--gold); }
 
         this._checkpointSubmitted = true;
 
-        // Show correct/incorrect feedback for each question
-        questions.forEach(function(q, qi){
-          var qEl = document.querySelector('.checkpoint-question[data-qidx="' + qi + '"]');
-          if (!qEl) return;
-          var opts = qEl.querySelectorAll('.challenge-option');
-          var userAns = self._missionAnswers[qi];
-          var feedbackEl = qEl.querySelector('.checkpoint-feedback');
-
-          opts.forEach(function(o, oi){
-            o.classList.remove('selected');
-            if (oi === q.correctIndex) o.classList.add('correct');
-            if (oi === userAns && userAns !== q.correctIndex) o.classList.add('incorrect');
-          });
-
-          if (feedbackEl) {
-            if (userAns === q.correctIndex) {
-              feedbackEl.className = 'checkpoint-feedback show correct';
-              feedbackEl.innerHTML = '<i class="fa-solid fa-check-circle"></i> 正确';
-            } else {
-              feedbackEl.className = 'checkpoint-feedback show incorrect';
-              feedbackEl.innerHTML = '<i class="fa-solid fa-times-circle"></i> 答案：' + (q.explanation || '');
-            }
-          }
-        });
-
-        // 计算并显示 Final Report
+        // 计算并显示 Final Report（选项标记已在 _selectCheckpointOption 中逐题完成）
         setTimeout(function() {
           self._renderFinalReport();
-        }, 600);
+        }, 300);
 
         // 隐藏导航按钮（Final Report 中有自己的按钮）
         var nav = document.querySelector('.mission-nav');
@@ -10889,11 +10971,11 @@ footer a:hover { color: var(--gold); }
               var nextBtn = document.createElement('div');
               nextBtn.style.cssText = 'margin-top:16px;padding:14px;border-radius:3px;background:rgba(181,166,66,0.05);border:1px solid rgba(181,166,66,0.2);text-align:center';
               var extraHTML = remainingCases > 0
-                ? '<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">还有 ' + remainingCases + ' 个Case可获XP</div>'
+                ? '<div style="font-size:18px;font-weight:600;color:var(--gold);margin-bottom:12px">还有 ' + remainingCases + ' 个Case可获XP</div>'
                 : '';
               nextBtn.innerHTML = extraHTML +
                 '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">' +
-                '<button class="mission-nav-btn" style="border:1px solid rgba(181,166,66,0.3);border-radius:2px;background:transparent;color:rgba(181,166,66,0.7);font-family:VT323,monospace;font-size:15px;padding:8px 16px;cursor:pointer" onclick="LensExplorer._goToMissionStep(4)">Final Judgment →</button>' +
+                '<button class="mission-nav-btn" style="border:1px solid rgba(181,166,66,0.3);border-radius:2px;background:transparent;color:rgba(181,166,66,0.7);font-family:VT323,monospace;font-size:15px;padding:8px 16px;cursor:pointer" onclick="LensExplorer._goToMissionStep(4);setTimeout(function(){var s4=document.querySelector(\'.mission-step-content[data-step=\\\"4\\\"]\');if(s4)s4.scrollIntoView({behavior:\'smooth\',block:\'start\'});},300)">Final Judgment →</button>' +
                 (remainingCases > 0 ? '<button class="mission-nav-btn" style="border:1px solid rgba(181,166,66,0.3);border-radius:2px;background:rgba(181,166,66,0.05);color:rgba(181,166,66,0.9);font-family:VT323,monospace;font-size:15px;padding:8px 16px;cursor:pointer" onclick="this.closest(\'div\').parentElement.remove();LensExplorer._renderCasePrediction()">继续 +XP</button>' : '') +
                 '</div>';
               panel.appendChild(nextBtn);
