@@ -22,7 +22,7 @@ Narrative Perception Atlas 是一个跨文化叙事感知仿真平台。用户�
 
 - **Welcome Experience**：首次访问展示 "Explore how different cultures perceive the same story."，提供 Start Demo / Skip Demo 双路径
 - **固定 Demo Case（寄生虫 Parasite）**：预设 5 个文化透镜的完整分析结果（Lens06 硅谷科技理性精英、Lens24 艺术家/导演、Lens21 北美品牌受众、Lens29 历史长周期视角、Lens25 推荐算法视角），每个透镜包含第一印象、注意到、忽略了、文化解码四层分析
-- **四步展示流程**：User Input（打字机效果）→ Lens Retrieval（逐张揭示）→ Narrative Analysis（逐块展开）→ Final Report（双 CTA 引导）
+- **四步展示流程**：User Input（打字机效果）→ Lens Retrieval（逐张揭示）→ Narrative Analysis（逐块展开）→ 用户手动点击"阅读完毕，继续"→ Final Report（双 CTA 引导）
 - **完成后双 CTA**：Analyze Your Own Story（进入 Simulator）/ Explore More Cases（返回 Demo Library）
 - **完全独立于 Simulator**：使用固定数据（`demo-data.js`），不调用 DeepSeek API
 
@@ -95,7 +95,7 @@ IP 匹配通过关键词触发，如 `['哪吒2','哪吒之魔童闹海','哪吒
 颜色语义：
 - **黑色**：背景 / 宇宙 / 空间
 - **金色**：判断 / 权重 / 输出结论（Explorer 主调）
-- **蓝色**：世界结构 / 信息流 / 数据网络（Simulator 主调）
+- **蓝色**：世界结构 / 信息流 / 数据网络（Simulator 主调）；Explorer 内交互选项（challenge-option）的悬停/选中状态
 
 ### 字体
 

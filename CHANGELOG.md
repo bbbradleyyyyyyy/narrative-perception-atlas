@@ -79,6 +79,11 @@ XP 经验值系统 + 4 个成就解锁 + localStorage 进度持久化
 - `functions/api/health.js` 支持 OPTIONS 预检请求
 - `_headers` 配置 CORS 全局放通 + 静态资源长期缓存
 
+### Fixes & Updates（同日追加）
+
+- **UI 修复**：Lens Explorer 选择题选项（challenge-option）颜色从金色恢复为蓝色，与交互元素的数据/信息属性保持一致
+- **Demo Mode 体验优化**：Step 2（Narrative Analysis）取消自动跳转到 CTA，改为所有 lens 分析揭示完成后显示"阅读完毕，继续 →"手动按钮，用户可自行翻阅后再进入下一步
+
 ---
 
 ## 未来 Roadmap

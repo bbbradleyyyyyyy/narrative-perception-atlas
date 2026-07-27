@@ -127,6 +127,9 @@
         '同一个 <span style="color:var(--gold);font-weight:500">' + currentCase.title + '</span>，在不同文化 Lens 下，产生了截然不同的意义。' +
       '</div>' +
       '<div class="demo-analysis-container" id="demoAnalysisContainer">' + analysisBlocksHtml + '</div>' +
+      '<div id="demoContinueBtn" style="display:none;text-align:center;margin-top:32px;padding-top:24px;border-top:1px solid var(--border);">' +
+        '<button class="demo-cta-primary" onclick="DemoMode.continueToCTA()">阅读完毕，继续 →</button>' +
+      '</div>' +
       '</div>';
 
     // Build Step 4: CTA
@@ -229,23 +232,26 @@
     });
   }
 
-  // Step 2: Analysis blocks reveal with scroll
+  // Step 2: Analysis blocks reveal (manual scroll, auto-advance removed)
   function playStep2() {
     setStep(2);
     var blocks = document.querySelectorAll('.demo-analysis-lens-block');
-    var body = document.querySelector('.demo-player-body');
 
     blocks.forEach(function (block, i) {
       animTimers.push(setTimeout(function () {
         block.classList.add('revealed');
-        if (body) body.scrollTop = block.offsetTop - 80;
 
-        // After last block, go to step 3
+        // After last block, show continue button
         if (i === blocks.length - 1) {
-          animTimers.push(setTimeout(playStep3, 1500));
+          var continueBtn = document.getElementById('demoContinueBtn');
+          if (continueBtn) continueBtn.style.display = 'block';
         }
       }, i * 800 + 400));
     });
+  }
+
+  function continueToCTA() {
+    playStep3();
   }
 
   // Step 3: CTA
@@ -344,7 +350,8 @@
     backToCases: backToCases,
     backFromPlayer: backFromPlayer,
     openWelcome: openWelcome,
-    onOnboardingClosed: onOnboardingClosed
+    onOnboardingClosed: onOnboardingClosed,
+    continueToCTA: continueToCTA
   };
 
 })(typeof window !== 'undefined' ? window : this);

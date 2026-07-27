@@ -368,6 +368,11 @@
   50%      { opacity: 0; }
 }
 
+/* — Demo Continue Button — */
+#demoContinueBtn {
+  animation: demoFadeUp 0.5s ease-out forwards;
+}
+
 /* — Mobile — */
 @media (max-width: 720px) {
   .demo-case-grid { flex-direction: column; align-items: center; }
