@@ -6054,7 +6054,6 @@ footer a:hover { color: var(--gold); }
       <label><i class="fa-solid fa-eye" style="color:var(--gold)"></i> 选择受众透镜 / Select Audience Lenses</label>
       <div class="lens-toolbar" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
         <input type="text" id="lensSearch" class="lens-search" placeholder="搜索透镜..." style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:rgba(0,0,0,0.2);color:var(--text-dim);font-size:11px;width:140px" oninput="filterLensChips()">
-        <button class="lens-tool-btn" onclick="selectAllLenses()" style="font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:rgba(255,255,255,0.03);color:var(--text-muted);cursor:pointer">全选</button>
         <button class="lens-tool-btn" onclick="clearAllLenses()" style="font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:rgba(255,255,255,0.03);color:var(--text-muted);cursor:pointer">清空</button>
         <span id="lensFilterCount" style="font-size:10px;color:var(--text-muted);margin-left:auto"></span>
       </div>
@@ -10292,6 +10291,10 @@ footer a:hover { color: var(--gold); }
           stepEl.classList.add('clicked');
           setTimeout(() => stepEl.classList.remove('clicked'), 500);
         }
+        // 对 Step 4 做特殊处理：如果已完成至少1个 Stage 3 case，允许进入
+        if (step === 4 && this._stage3State && Object.keys(this._stage3State.completedCases || {}).length > 0) {
+          this._highestMissionStep = Math.max(this._highestMissionStep || 1, 4);
+        }
         // Only allow going to already visited steps or the next available
         if (step <= (this._highestMissionStep || 1)) {
           this.currentMissionStep = step;
@@ -10417,7 +10420,11 @@ footer a:hover { color: var(--gold); }
 
         // 显示"锁定答案"按钮
         var lockWrap = qEl.querySelector('.checkpoint-lock-wrap[data-qidx="' + qIdx + '"]');
-        if (lockWrap) lockWrap.style.display = 'block';
+        if (lockWrap) {
+          lockWrap.style.display = 'block';
+          var lockBtn = lockWrap.querySelector('.quiz-confirm-btn');
+          if (lockBtn) lockBtn.classList.add('enabled');
+        }
       },
 
       /* 需求8：点击"锁定答案"后才显示正确/错误状态、解释和"下一题"按钮 */
@@ -12474,11 +12481,6 @@ footer a:hover { color: var(--gold); }
       var countEl = document.getElementById('lensFilterCount');
       if (countEl) countEl.textContent = visible + ' / ' + chips.length + ' 个透镜';
     }
-    function selectAllLenses() {
-      document.querySelectorAll('.lens-chip').forEach(function(c) {
-        if (!c.classList.contains('selected')) c.click();
-      });
-    }
     function clearAllLenses() {
       document.querySelectorAll('.lens-chip.selected').forEach(function(c) { c.click(); });
     }
@@ -12658,10 +12660,19 @@ footer a:hover { color: var(--gold); }
 
     function runDemo() {
       var input = document.getElementById('narrativeInput');
-      if (input) input.value = '哪吒2：全球票房突破150亿，海外观众热议中国神话叙事';
+      if (input) {
+        input.value = '哪吒2：全球票房突破150亿，海外观众热议中国神话叙事';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      }
       var chips = document.querySelectorAll('.lens-chip');
-      if (chips.length > 0) { chips[0].click(); chips[1].click(); chips[2].click(); }
-      if (typeof runSimulation === 'function') runSimulation();
+      if (chips.length > 0) {
+        chips[0].click();
+        chips[1].click();
+        chips[2].click();
+      }
+      setTimeout(function() {
+        if (typeof runSimulation === 'function') runSimulation();
+      }, 300);
     }
 
     async function runSimulation() {
@@ -13013,6 +13024,19 @@ footer a:hover { color: var(--gold); }
       var overlay = document.getElementById('onboardingOverlay');
       if (overlay) overlay.style.display = 'none';
       localStorage.setItem('npa_onboarded', '1');
+      // Demo Mode: onboarding 关闭后自动触发一次演示
+      setTimeout(function() { maybeAutoDemo(); }, 400);
+    }
+
+    // Demo Mode: 首次访问自动演示完整流程
+    function maybeAutoDemo() {
+      if (localStorage.getItem('npa_demo_seen')) return;
+      localStorage.setItem('npa_demo_seen', '1');
+      // 导航到 simulator 并触发一键体验
+      if (typeof App !== 'undefined' && App.navigateTo) {
+        App.navigateTo('simulator');
+        setTimeout(function() { runDemo(); }, 900);
+      }
     }
 
     // ========== IMMERSIVE WORLD MAP BACKGROUND SYSTEM ==========
